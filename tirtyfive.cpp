@@ -27,6 +27,9 @@ void logout();
 void Product();
 void AddProduct();
 void displayProd();
+void updateProduct(int selectedId);
+void selectProduct();
+void deleteProduct(int selectedId);
 
 
 vector<string> categories; // Declare the vector globally
@@ -400,6 +403,7 @@ void menu() {
 void Product(){
     system("cls"); // Clear the screen
     string products;
+    int selectedId = 0;
     cout << "\t\t\t      |================================================================================================|\n";
     cout << "\t\t\t      |                                                                                                |\n";
     cout << "\t\t\t      |                            Joetech (POS) Inventory Management System                           |\n";
@@ -436,9 +440,19 @@ void Product(){
     }
     else if (products == "2"){
         displayProd();
-    }
-
-
+    }else if (products =="3"){
+    	if (selectedId != 0) {
+            updateProduct(selectedId);
+        } else {
+            // Prompt for selecting a product by ID
+            cout << "Enter the ID of the product you want to edit: ";
+            cin >> selectedId;
+            system("cls");
+            updateProduct(selectedId);
+        }
+	}else{
+    	Product();
+	}
 }
 void AddProduct() {
     system("cls"); // Clear the screen
@@ -550,7 +564,7 @@ void displayProd() {
         }
         	string pick2;
             cout << "\t\t\t\t\t\t========================================================================================================================\n";
-            cout << "\t\t\t\t\t\t                                      [B] back [A] Add Product [O] Order \n";
+            cout << "\t\t\t\t\t\t                          [B] Back [A] Add Product  [S] Select Product [D] Delete Product  [U] Update Product [O] Order \n";
             cout << "\t\t\t\t\t\t========================================================================================================================\n";
             cout << "\t\t\t\t\t\t [<=>] : ";
             cin >> pick2;
@@ -559,7 +573,23 @@ void displayProd() {
             	Product();
 			}else if (pick2 == "A" || pick2 == "a"){
 				AddProduct();
-			}else{
+			}else if (pick2 == "S" || pick2 == "s"){
+				selectProduct();
+			}else if (pick2 == "D" || pick2 == "d") {
+		    // Prompt for selecting a product by ID
+			    int selectedId;
+			    cout << "Enter the ID of the product you want to delete: ";
+			    cin >> selectedId;
+			    system("cls");
+			    deleteProduct(selectedId);
+			}else if (pick2 == "U" || pick2 == "u") {
+            // Prompt for selecting a product by ID
+	            int selectedId;
+	            cout << "Enter the ID of the product you want to update: ";
+	            cin >> selectedId;
+	            system("cls");
+	            updateProduct(selectedId);
+	        } else{
 				cout << "Order";
 			}
         inputFile.close();
@@ -567,6 +597,219 @@ void displayProd() {
         cout << "Failed to open file for reading." << endl;
     }
 }
+void updateProduct(int selectedId) {
+    // Open the file for reading
+    ifstream inputFile("comproddis.txt");
+    if (inputFile.is_open()) {
+        string line;
+        bool found = false;
+        vector<string> products;
+
+        // Read all the products from the file and store them in a vector
+        while (getline(inputFile, line)) {
+            stringstream ss(line);
+            string token;
+
+            // Extract data from the line using comma as the delimiter
+            getline(ss, token, ',');
+            int id;
+            istringstream(token) >> id;
+
+            if (id == selectedId) {
+                found = true;
+                // Prompt for updated information
+                string name, category, description, price, quantity;
+                cout << "Enter updated product name: ";
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                getline(cin, name);
+                cout << "Enter updated product category: ";
+                getline(cin, category);
+                cout << "Enter updated product description: ";
+                getline(cin, description);
+                cout << "Enter updated product price: ";
+                getline(cin, price);
+                cout << "Enter updated product quantity: ";
+                getline(cin, quantity);
+
+                // Create the updated product line
+                stringstream updatedProduct;
+                updatedProduct << id << "," << name << "," << category << "," << description << "," << price << "," << quantity;
+                products.push_back(updatedProduct.str());
+            } else {
+                products.push_back(line);
+            }
+        }
+
+        inputFile.close();
+
+        if (found) {
+            // Open the file for writing (clears the file)
+            ofstream outputFile("comproddis.txt");
+            if (outputFile.is_open()) {
+                // Write all the products back to the file
+                for (size_t i = 0; i < products.size(); ++i) {
+                    outputFile << products[i] << endl;
+                }
+                outputFile.close();
+                cout << "Product with ID " << selectedId << " updated successfully." << endl;
+                displayProd();
+            } else {
+                cout << "Failed to open file for writing." << endl;
+            }
+        } else {
+            cout << "Product with ID " << selectedId << " not found." << endl;
+        }
+
+    } else {
+        cout << "Failed to open file for reading." << endl;
+    }
+
+    string pick5;
+    cout << "Press any key to go back to the product list...";
+    cin >> pick5;
+    displayProd();
+}
+void selectProduct() {
+    // Prompt for selecting a product by ID
+    int selectedId;
+    cout << "Enter the ID of the product you want to select: ";
+    cin >> selectedId;
+    system("cls");
+
+    // Open the file for reading
+    ifstream inputFile("comproddis.txt");
+    if (inputFile.is_open()) {
+        string line;
+        bool found = false;
+
+        while (getline(inputFile, line)) {
+            stringstream ss(line);
+            string token;
+
+            // Extract data from the line using comma as the delimiter
+            getline(ss, token, ',');
+            int id;
+            istringstream(token) >> id;
+
+            if (id == selectedId) {
+                found = true;
+
+                // Extract other product details
+                getline(ss, token, ',');
+                string name = token;
+
+                getline(ss, token, ',');
+                string category = token;
+
+                getline(ss, token, ',');
+                string description = token;
+
+                getline(ss, token, ',');
+                double price;
+                istringstream(token) >> price;
+
+                getline(ss, token, ',');
+                int quantity;
+                istringstream(token) >> quantity;
+
+                // Display the product information
+                cout << "Selected Product ID: " << id << endl;
+                cout << "Name: " << name << endl;
+                cout << "Category: " << category << endl;
+                cout << "Description: " << description << endl;
+                cout << "Price: $" << fixed << setprecision(2) << price << endl;
+                cout << "Quantity: " << quantity << endl;
+
+                // Prompt for options (Update or Delete)
+                string pick2;
+                cout << "\nChoose an option:\n";
+                cout << "U. Update Product\n";
+                cout << "D. Delete Product\n";
+                cout << "Enter your choice: ";
+                cin >> pick2;
+                system("cls");
+
+                if (pick2 == "U" || pick2 == "u") {
+                    updateProduct(selectedId);
+                } else if (pick2 == "D" || pick2 == "d") {
+                    deleteProduct(selectedId);
+                } else {
+                    cout << "Invalid option. Please try again." << endl;
+                    displayProd();
+                }
+
+                break; // No need to continue searching
+            }
+        }
+
+        inputFile.close();
+
+        if (!found) {
+            cout << "Product with ID " << selectedId << " not found." << endl;
+        }
+    } else {
+        cout << "Failed to open file for reading." << endl;
+    }
+}
+
+
+
+void deleteProduct(int selectedId) {
+    ifstream inputFile("comproddis.txt");
+    if (inputFile.is_open()) {
+        string line;
+        bool found = false;
+        vector<string> products;
+
+        while (getline(inputFile, line)) {
+            stringstream ss(line);
+            string token;
+
+            // Extract data from the line using comma as the delimiter
+            getline(ss, token, ',');
+            int id;
+            istringstream(token) >> id;
+
+            if (id == selectedId) {
+                found = true;
+            } else {
+                // Adjust the ID of the remaining products
+                id = products.size() + 1;
+
+                // Update the product line with the new ID
+                stringstream updatedProduct;
+                updatedProduct << id << line.substr(line.find(','));  // Retain the remaining data
+                products.push_back(updatedProduct.str());
+            }
+        }
+
+        inputFile.close();
+
+        if (found) {
+            ofstream outputFile("comproddis.txt");
+            if (outputFile.is_open()) {
+                for (size_t i = 0; i < products.size(); ++i) {
+                    outputFile << products[i] << endl;
+                }
+                outputFile.close();
+                cout << "Product with ID " << selectedId << " deleted successfully." << endl;
+                displayProd();
+            } else {
+                cout << "Failed to open file for writing." << endl;
+            }
+        } else {
+            cout << "Product with ID " << selectedId << " not found." << endl;
+        }
+    } else {
+        cout << "Failed to open file for reading." << endl;
+    }
+
+    string pick5;
+    cout << "Press any key to go back to the product list...";
+    cin >> pick5;
+    displayProd();
+}
+
 
 
 void start() {
@@ -703,8 +946,4 @@ int main() {
 
     return 0;
 }
-
-
-
-
 
